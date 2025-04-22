@@ -5,6 +5,9 @@ import { useEffect, useState } from "react";
 type CurrencyData = {
   pair: string;
   point: number;
+  high: number;
+  low: number;
+  updatedAt: string;
 };
 
 export default function Banner() {
@@ -21,8 +24,19 @@ export default function Banner() {
 
     socket.onmessage = (event) => {
       const parsed = JSON.parse(event.data);
-      console.log("🔌 Mensaje recibido desde WebSocket:", parsed); // 👈
-      setData(parsed);
+      console.log("🔌 Mensaje recibido desde WebSocket:", parsed);
+
+      const high = parsed.point + Math.random(); // Simulación
+      const low = parsed.point - Math.random(); // Simulación
+      const updatedAt = new Date().toISOString();
+
+      setData({
+        pair: parsed.pair,
+        point: parsed.point,
+        high: parseFloat(high.toFixed(4)),
+        low: parseFloat(low.toFixed(4)),
+        updatedAt,
+      });
     };
 
     socket.onclose = () => {
@@ -38,23 +52,48 @@ export default function Banner() {
   }, []);
 
   return (
-    <div className="bg-slate-900 text-white p-4 rounded-lg shadow-lg text-center">
-      <h2 className="text-xl font-bold mb-2">🧾 Banner de Divisa</h2>
-      <p className="text-sm">
+    <div className="bg-slate-900 text-white p-6 rounded-lg shadow-lg">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+        <div className="text-xl font-bold">Currency Pair</div>
+        <div className="text-2xl font-mono text-green-400">
+          {data?.pair ?? "---"}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-center text-sm bg-slate-800 p-4 rounded-md">
+        <div>
+          <p className="text-gray-400">Current Exchange-Rate Value</p>
+          <p className="text-lg font-bold text-green-400">
+            {data ? data.point.toFixed(4) : "---"}
+          </p>
+        </div>
+        <div>
+          <p className="text-gray-400">Highest Exchange-Rate Today</p>
+          <p className="text-lg">{data ? data.high.toFixed(4) : "---"}</p>
+        </div>
+        <div>
+          <p className="text-gray-400">Lowest Exchange-Rate Today</p>
+          <p className="text-lg">{data ? data.low.toFixed(4) : "---"}</p>
+        </div>
+        <div className="col-span-2">
+          <p className="text-gray-400">Last Update (UTC)</p>
+          <p className="text-lg">
+            {data
+              ? new Date(data.updatedAt)
+                  .toISOString()
+                  .replace("T", " ")
+                  .substring(0, 19)
+              : "---"}
+          </p>
+        </div>
+      </div>
+
+      <p className="mt-4 text-sm text-gray-400">
         Estado de conexión:{" "}
         <span className={connected ? "text-green-400" : "text-red-400"}>
           {connected ? "Conectado" : "Desconectado"}
         </span>
       </p>
-
-      {data ? (
-        <div className="mt-4">
-          <p className="text-lg font-semibold">Par: {data.pair}</p>
-          <p className="text-2xl font-bold">Precio: {data.point.toFixed(4)}</p>
-        </div>
-      ) : (
-        <p className="mt-4">Cargando datos...</p>
-      )}
     </div>
   );
 }
